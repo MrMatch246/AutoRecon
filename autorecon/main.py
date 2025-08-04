@@ -329,6 +329,7 @@ async def port_scan(plugin, target):
 			target.running_tasks.pop(plugin.slug, None)
 
 		info('Port scan {bblue}' + plugin.name + ' {green}(' + plugin.slug + '){rst} against {byellow}' + target.address + '{rst} finished in ' + elapsed_time, verbosity=2)
+		os.system ('touch ' + os.path.join(target.scandir, '.port_scans', f".{plugin.slug}"))
 		return {'type':'port', 'plugin':plugin, 'result':result}
 
 async def service_scan(plugin, service):
@@ -453,6 +454,7 @@ async def service_scan(plugin, service):
 				service.target.running_tasks.pop(tag, None)
 
 			info('Service scan {bblue}' + plugin.name + ' {green}(' + tag + '){rst} against {byellow}' + service.target.address + '{rst} finished in ' + elapsed_time, verbosity=2)
+			os.system ('touch ' + os.path.join(scandir, '.service_scans', f".{plugin.slug}"))
 			return {'type':'service', 'plugin':plugin, 'result':result}
 
 async def generate_report(plugin, targets):
@@ -485,6 +487,7 @@ async def scan_target(target):
 	os.makedirs(scandir, exist_ok=True)
 
 	os.makedirs(os.path.join(scandir, 'xml'), exist_ok=True)
+	os.makedirs(os.path.join(scandir, '.port_scans'), exist_ok=True)
 
 	if not config['only_scans_dir']:
 		exploitdir = os.path.join(basedir, 'exploit')
@@ -538,6 +541,11 @@ async def scan_target(target):
 	else:
 		for plugin in target.autorecon.plugin_types['port']:
 			if config['proxychains'] and plugin.type == 'udp':
+				continue
+			processed_marker = os.path.join(scandir, '.port_scans', f".{plugin.slug}")
+			# If the plugin has already been run against this target, skip it.
+			if os.path.exists(processed_marker):
+				info(f"Port Plugin {plugin.name} ({plugin.slug}) has already been run against {target.address}. Skipping.")
 				continue
 
 			if config['port_scans'] and plugin.slug in config['port_scans']:
@@ -627,6 +635,7 @@ async def scan_target(target):
 				scandir = os.path.join(scandir, protocol + str(port))
 				os.makedirs(scandir, exist_ok=True)
 				os.makedirs(os.path.join(scandir, 'xml'), exist_ok=True)
+				os.makedirs(os.path.join(scandir, '.service_scans'), exist_ok=True)
 
 			# Special cases for HTTP.
 			http_scheme = 'https' if 'https' in service.name or service.secure is True else 'http'
@@ -655,6 +664,13 @@ async def scan_target(target):
 				plugin_was_run = False
 				plugin_service_match = False
 				plugin_tag = service.tag() + '/' + plugin.slug
+
+				processed_marker = os.path.join(scandir, '.service_scans', f".{plugin.slug}")
+				# If the plugin has already been run against this service, skip it.
+				if os.path.exists(processed_marker):
+					info(f"Service Plugin {plugin.name} ({plugin.slug}) has already been run against {service.name} on {target.address}. Skipping.")
+					continue
+
 
 				for service_dict in plugin.services:
 					if service_dict['protocol'] == protocol and port in service_dict['port']:
