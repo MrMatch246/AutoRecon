@@ -41,8 +41,9 @@ if not os.path.exists(config['data_dir']):
 	shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default-plugins'), os.path.join(config['data_dir'], 'plugins'))
 	shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wordlists'), os.path.join(config['data_dir'], 'wordlists'))
 else:
-	if not os.path.exists(os.path.join(config['data_dir'], 'plugins')):
-		shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default-plugins'), os.path.join(config['data_dir'], 'plugins'))
+	develop =False
+	if not os.path.exists(os.path.join(config['data_dir'], 'plugins')) or develop:
+		shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default-plugins'), os.path.join(config['data_dir'], 'plugins'), dirs_exist_ok=True)
 	if not os.path.exists(os.path.join(config['data_dir'], 'wordlists')):
 		shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wordlists'), os.path.join(config['data_dir'], 'wordlists'))
 	if not os.path.exists(os.path.join(config['data_dir'], 'VERSION-' + VERSION)):
@@ -499,8 +500,8 @@ async def scan_target(target):
 		reportdir = os.path.join(basedir, 'report')
 		os.makedirs(reportdir, exist_ok=True)
 
-		open(os.path.join(reportdir, 'local.txt'), 'a').close()
-		open(os.path.join(reportdir, 'proof.txt'), 'a').close()
+		#open(os.path.join(reportdir, 'local.txt'), 'a').close()
+		#open(os.path.join(reportdir, 'proof.txt'), 'a').close()
 
 		screenshotdir = os.path.join(reportdir, 'screenshots')
 		os.makedirs(screenshotdir, exist_ok=True)
