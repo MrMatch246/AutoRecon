@@ -491,8 +491,8 @@ async def scan_target(target):
 	os.makedirs(os.path.join(scandir, '.port_scans'), exist_ok=True)
 
 	if not config['only_scans_dir']:
-		exploitdir = os.path.join(basedir, 'exploit')
-		os.makedirs(exploitdir, exist_ok=True)
+		#exploitdir = os.path.join(basedir, 'exploit')
+		#os.makedirs(exploitdir, exist_ok=True)
 
 		lootdir = os.path.join(basedir, 'loot')
 		os.makedirs(lootdir, exist_ok=True)
@@ -503,8 +503,8 @@ async def scan_target(target):
 		#open(os.path.join(reportdir, 'local.txt'), 'a').close()
 		#open(os.path.join(reportdir, 'proof.txt'), 'a').close()
 
-		screenshotdir = os.path.join(reportdir, 'screenshots')
-		os.makedirs(screenshotdir, exist_ok=True)
+		#screenshotdir = os.path.join(reportdir, 'screenshots')
+		#os.makedirs(screenshotdir, exist_ok=True)
 	else:
 		reportdir = scandir
 
