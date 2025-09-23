@@ -41,6 +41,7 @@ class DirBuster(ServiceScan):
 			return False
 
 	async def run(self, service):
+		return
 		dot_extensions = ','.join(['.' + x for x in self.get_option('ext').split(',')])
 		for wordlist in self.get_option('wordlist'):
 			name = os.path.splitext(os.path.basename(wordlist))[0]
