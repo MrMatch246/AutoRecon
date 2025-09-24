@@ -19,6 +19,26 @@ from autorecon.targets import Target, Service
 
 VERSION = "2.0.36"
 
+def latest_mtime(path):
+	"""Recursively get the latest modification time in a directory."""
+	if not os.path.exists(path):
+		return 0
+	if os.path.isfile(path):
+		return os.path.getmtime(path)
+	latest = os.path.getmtime(path)
+	for root, _, files in os.walk(path):
+		for f in files:
+			fpath = os.path.join(root, f)
+			latest = max(latest, os.path.getmtime(fpath))
+	return latest
+
+def needs_update(src, dst):
+	"""Return True if dst doesn't exist or src contains newer files than dst."""
+	if not os.path.exists(dst):
+		return True
+	return latest_mtime(src) > latest_mtime(dst)
+
+# ----------------------- CONFIG DIR -----------------------
 if not os.path.exists(config['config_dir']):
 	shutil.rmtree(config['config_dir'], ignore_errors=True, onerror=None)
 	os.makedirs(config['config_dir'], exist_ok=True)
@@ -33,21 +53,33 @@ else:
 	if not os.path.exists(os.path.join(config['config_dir'], 'VERSION-' + VERSION)):
 		warn('It looks like the config in ' + config['config_dir'] + ' is outdated. Please remove the ' + config['config_dir'] + ' directory and re-run AutoRecon to rebuild it.')
 
+# ----------------------- DATA DIR -----------------------
+plugins_src = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default-plugins')
+plugins_dst = os.path.join(config['data_dir'], 'plugins')
+
+wordlists_src = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wordlists')
+wordlists_dst = os.path.join(config['data_dir'], 'wordlists')
+
+version_dir = os.path.join(config['data_dir'], f'VERSION-{VERSION}')
 
 if not os.path.exists(config['data_dir']):
 	shutil.rmtree(config['data_dir'], ignore_errors=True, onerror=None)
 	os.makedirs(config['data_dir'], exist_ok=True)
 	open(os.path.join(config['data_dir'], 'VERSION-' + VERSION), 'a').close()
-	shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default-plugins'), os.path.join(config['data_dir'], 'plugins'))
-	shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wordlists'), os.path.join(config['data_dir'], 'wordlists'))
+	shutil.copytree(plugins_src, plugins_dst)
+	shutil.copytree(wordlists_src, wordlists_dst)
 else:
-	develop =False
-	if not os.path.exists(os.path.join(config['data_dir'], 'plugins')) or develop:
-		shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'default-plugins'), os.path.join(config['data_dir'], 'plugins'), dirs_exist_ok=True)
-	if not os.path.exists(os.path.join(config['data_dir'], 'wordlists')):
-		shutil.copytree(os.path.join(os.path.dirname(os.path.realpath(__file__)), 'wordlists'), os.path.join(config['data_dir'], 'wordlists'))
-	if not os.path.exists(os.path.join(config['data_dir'], 'VERSION-' + VERSION)):
+	develop = False
+	# Copy plugins if develop mode or changes detected
+	if develop or needs_update(plugins_src, plugins_dst):
+		shutil.copytree(plugins_src, plugins_dst, dirs_exist_ok=True)
+	# Copy wordlists if changes detected
+	if needs_update(wordlists_src, wordlists_dst):
+		shutil.copytree(wordlists_src, wordlists_dst, dirs_exist_ok=True)
+	# Warn if version is outdated
+	if not os.path.exists(version_dir):
 		warn('It looks like the plugins in ' + config['data_dir'] + ' are outdated. Please remove the ' + config['data_dir'] + ' directory and re-run AutoRecon to rebuild them.')
+
 
 
 # Saves current terminal settings so we can restore them.
